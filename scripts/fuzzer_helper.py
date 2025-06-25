@@ -208,7 +208,9 @@ def get_github_issues_list() -> list[dict]:
 # closes non-reproducible issues; returns reproducible issues
 def close_non_reproducible_issues(shell) -> dict[str, dict]:
     reproducible_issues: dict[str, dict] = {}
-    for issue in get_github_issues_list():
+    tmp_list = get_github_issues_list()
+    print(f'check reproducibility - {len(tmp_list)}')
+    for issue in tmp_list:
         if not is_reproducible_issue(shell, issue):
             # the issue appears to be fixed - close the issue
             print(f"Failed to reproduce issue {issue['number']}, closing...")

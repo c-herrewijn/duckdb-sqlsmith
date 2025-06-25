@@ -17,6 +17,8 @@ no_git_checks = False
 max_queries = 1000
 verification = False
 
+print('test1')
+
 for param in sys.argv:
     if param == '--sqlsmith':
         fuzzer = 'sqlsmith'
@@ -60,6 +62,7 @@ if seed < 0:
 
 git_hash = os.getenv('DUCKDB_HASH')
 
+print(f'test2 - {git_hash}')
 
 def get_create_db_statement(db):
     if db == 'alltypes':
