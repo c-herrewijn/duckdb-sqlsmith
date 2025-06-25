@@ -1,3 +1,5 @@
+print('test0', flush=True)
+
 import json
 import requests
 import sys
@@ -17,7 +19,7 @@ no_git_checks = False
 max_queries = 1000
 verification = False
 
-print('test1')
+print('test1', flush=True)
 
 for param in sys.argv:
     if param == '--sqlsmith':
@@ -62,7 +64,7 @@ if seed < 0:
 
 git_hash = os.getenv('DUCKDB_HASH')
 
-print(f'test2 - {git_hash}')
+print(f'test2 - {git_hash}', flush=True)
 
 def get_create_db_statement(db):
     if db == 'alltypes':

@@ -185,7 +185,7 @@ def is_reproducible_issue(shell, issue) -> bool:
         return True
     sql = extract[0] + ';'
     if label_timeout is False:
-        print(f"Checking issue {issue['number']}...")
+        print(f"Checking issue {issue['number']}...", flush=True)
         (stdout, stderr, returncode, is_timeout) = run_shell_command_batch(shell, sql)
         if is_timeout:
             label_github_issue(issue['number'], 'timeout')
