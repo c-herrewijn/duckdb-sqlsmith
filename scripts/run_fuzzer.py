@@ -102,7 +102,9 @@ def get_fuzzer_name_printable(fuzzer):
 def run_shell_command(cmd):
     command = [shell, '--batch', '-init', '/dev/null']
     res = subprocess.run(command, input=bytearray(cmd, 'utf8'), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print('decoding stdout...', flush=True)
     stdout = res.stdout.decode('utf8', 'ignore').strip()
+    print('decoding stderr...', flush=True)
     stderr = res.stderr.decode('utf8', 'ignore').strip()
     return (stdout, stderr, res.returncode)
 
