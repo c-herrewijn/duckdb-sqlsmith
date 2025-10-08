@@ -94,7 +94,9 @@ def make_github_issue(title, body):
 
 def get_github_issues_per_page(page: int) -> list[dict]:
     session = create_session()
+    print(session.headers)
     url = issue_url() + '?per_page=100&page=' + str(page)
+    print(url, flush=True)
     r = session.get(url)
     if r.status_code != 200:
         print('Failed to get list of issues')
