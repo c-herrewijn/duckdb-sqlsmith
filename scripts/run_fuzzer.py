@@ -128,6 +128,7 @@ def is_known_issue(exception_msg):
 # Don't go on and fuzz if perform checks = true
 if perform_checks:
     fuzzer_helper.close_non_reproducible_issues(shell)
+    print('finished checking existing issues')
     exit(0)
 
 last_query_log_file = 'sqlsmith.log'

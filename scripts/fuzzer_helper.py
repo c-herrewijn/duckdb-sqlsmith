@@ -48,6 +48,8 @@ def issues_by_title_url(issue_title):
 
 
 def get_token():
+    print("not getting token")
+    exit(42)
     if 'FUZZEROFDUCKSKEY' not in os.environ:
         print("FUZZEROFDUCKSKEY not found in environment variables")
         exit(1)
@@ -63,13 +65,16 @@ def get_token():
 
 
 def create_session():
+    print("creating gh session without token")
     # Create an authenticated session to create the issue
     session = requests.Session()
-    session.headers.update({'Authorization': 'token %s' % (get_token(),)})
+    # session.headers.update({'Authorization': 'token %s' % (get_token(),)})
     return session
 
 
 def make_github_issue(title, body):
+    print("not creating issue")
+    exit(42)
     if len(title) > 240:
         #  avoid title is too long error (maximum is 256 characters)
         title = title[:240] + '...'
@@ -111,6 +116,8 @@ def get_github_issues_by_title(issue_title) -> list[dict]:
 
 
 def close_github_issue(number):
+    print(f"not closing issue nr {number}")
+    exit(42)
     session = create_session()
     url = issue_url() + '/' + str(number)
     params = {'state': 'closed'}
@@ -124,6 +131,8 @@ def close_github_issue(number):
 
 
 def label_github_issue(number, label):
+    print(f"not labeling issue nr {number} {label}")
+    exit(42)
     session = create_session()
     url = issue_url() + '/' + str(number)
     params = {'labels': [label]}
@@ -156,7 +165,6 @@ def extract_issue(body, nr):
 
 def run_shell_command_batch(shell, cmd):
     command = [shell, '--batch', '-init', '/dev/null']
-
     try:
         res = subprocess.run(
             command, input=bytearray(cmd, 'utf8'), stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300
@@ -170,10 +178,14 @@ def run_shell_command_batch(shell, cmd):
 
 
 def is_reproducible_issue(shell, issue) -> bool:
-    if any(label['name'] == 'AFL' for label in issue['labels']):
-        # The reproducibility of AFL issues can not be tested, because they are formatted differently.
-        # We assume they are reproducible (i.e. not fixed yet)
-        return True
+    print(f"issue number: {issue['number']}")
+    if issue['number'] == '9294':
+        print('checking holy 9294')
+    else:
+        if any(label['name'] == 'AFL' for label in issue['labels']):
+            # The reproducibility of AFL issues can not be tested, because they are formatted differently.
+            # We assume they are reproducible (i.e. not fixed yet)
+            return True
     extract = extract_issue(issue['body'], issue['number'])
     labels = issue['labels']
     label_timeout = False
@@ -184,9 +196,13 @@ def is_reproducible_issue(shell, issue) -> bool:
         # failed extract: leave the issue as-is
         return True
     sql = extract[0] + ';'
+    print(f"sql:\n{sql}", flush=True)
     if label_timeout is False:
         print(f"Checking issue {issue['number']}...")
         (stdout, stderr, returncode, is_timeout) = run_shell_command_batch(shell, sql)
+        print(f"returncode:\n{returncode}")
+        print(f"is_internal_error:\n{is_internal_error(stderr)}")
+        print(f"stderr:\n{stderr}", flush=True)
         if is_timeout:
             label_github_issue(issue['number'], 'timeout')
         else:
@@ -209,10 +225,11 @@ def get_github_issues_list() -> list[dict]:
 def close_non_reproducible_issues(shell) -> dict[str, dict]:
     reproducible_issues: dict[str, dict] = {}
     for issue in get_github_issues_list():
+        print(f"=========================")
         if not is_reproducible_issue(shell, issue):
             # the issue appears to be fixed - close the issue
-            print(f"Failed to reproduce issue {issue['number']}, closing...")
-            close_github_issue(int(issue['number']))
+            print(f"Failed to reproduce issue {issue['number']}")
+            # close_github_issue(int(issue['number']))
         else:
             reproducible_issues[issue['title']] = issue
     # retun open issues as dict, so they can be searched by title, which is the exception message without trace
@@ -221,7 +238,7 @@ def close_non_reproducible_issues(shell) -> dict[str, dict]:
 
 def file_issue(cmd, exception_msg, stacktrace, fuzzer, seed, hash):
     # issue is new, file it
-    print("Filing new issue to Github")
+    print("Dummy: Filing new issue to Github")
 
     title = exception_msg
     body = (
@@ -231,8 +248,11 @@ def file_issue(cmd, exception_msg, stacktrace, fuzzer, seed, hash):
         .replace("${SEED}", str(seed))
     )
     body += sql_header + cmd + exception_header + exception_msg + trace_header + stacktrace + footer
-    print(title, body)
-    make_github_issue(title, body)
+
+    print("DEBUG: not actually making issue: ")
+    print("title:\n", title)
+    print("body:\n", body)
+    # make_github_issue(title, body)
 
 
 def is_internal_error(error):
