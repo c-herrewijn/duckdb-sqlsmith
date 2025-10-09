@@ -180,7 +180,7 @@ def run_shell_command_batch(shell, cmd):
 
 
 def is_reproducible_issue(shell, issue) -> bool:
-    if issue['number'] == '4294':
+    if issue['number'] == '4294' or issue['number'] == 4294:
         print('checking holy 4294')
     else:
         if any(label['name'] == 'AFL' for label in issue['labels']):
@@ -204,8 +204,9 @@ def is_reproducible_issue(shell, issue) -> bool:
         (stdout, stderr, returncode, is_timeout) = run_shell_command_batch(shell, sql)
         print(f"returncode:\n{returncode}")
         print(f"is_internal_error:\n{is_internal_error(stderr)}")
-        if issue['number'] == '4294':
+        if issue['number'] == '4294' or issue['number'] == 4294:
             print(f"stderr:\n{stderr}", flush=True)
+            print(f"stdout:\n{stdout}", flush=True)
         if is_timeout:
             label_github_issue(issue['number'], 'timeout')
         else:
