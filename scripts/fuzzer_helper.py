@@ -180,14 +180,14 @@ def run_shell_command_batch(shell, cmd):
 
 
 def is_reproducible_issue(shell, issue) -> bool:
-    print(f"issue number: {issue['number']}")
-    if issue['number'] == '9294':
-        print('checking holy 9294')
+    if issue['number'] == '4294':
+        print('checking holy 4294')
     else:
         if any(label['name'] == 'AFL' for label in issue['labels']):
             # The reproducibility of AFL issues can not be tested, because they are formatted differently.
             # We assume they are reproducible (i.e. not fixed yet)
             return True
+    print(f"issue number: {issue['number']}")
     extract = extract_issue(issue['body'], issue['number'])
     labels = issue['labels']
     label_timeout = False
@@ -204,7 +204,8 @@ def is_reproducible_issue(shell, issue) -> bool:
         (stdout, stderr, returncode, is_timeout) = run_shell_command_batch(shell, sql)
         print(f"returncode:\n{returncode}")
         print(f"is_internal_error:\n{is_internal_error(stderr)}")
-        print(f"stderr:\n{stderr}", flush=True)
+        if issue['number'] == '4294':
+            print(f"stderr:\n{stderr}", flush=True)
         if is_timeout:
             label_github_issue(issue['number'], 'timeout')
         else:
