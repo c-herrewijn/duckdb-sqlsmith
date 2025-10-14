@@ -187,9 +187,18 @@ with open(last_query_log_file, 'r') as f:
 with open(complete_log_file, 'r') as f:
     all_queries = f.read()
 
-(stdout, stderr, returncode) = run_shell_command(create_db_statement + '\n' + all_queries)
+# try max 30 times to reproduce; some errors not always occur
+reproducible = False
+for _ in range(30):
+    (stdout, stderr, returncode) = run_shell_command(create_db_statement + '\n' + all_queries)
+    if returncode < 0:
+        reproducible = True
+        break
+    if returncode != 0 and fuzzer_helper.is_internal_error(stderr):
+        reproducible = True
+        break
 
-if returncode == 0:
+if not reproducible:
     print("Failed to reproduce the issue...")
     exit(0)
 
@@ -198,9 +207,6 @@ print(stdout)
 print("==============  STDERR  =================")
 print(stderr)
 print("==========================================")
-if not fuzzer_helper.is_internal_error(stderr):
-    print("Failed to reproduce the internal error")
-    exit(0)
 
 exception_msg, stacktrace = fuzzer_helper.split_exception_trace(stderr)
 
@@ -223,11 +229,14 @@ cmd = create_db_statement + '\n' + required_queries
 
 # get a new error message.
 (stdout, stderr, returncode) = run_shell_command(cmd)
-exception_msg, stacktrace = fuzzer_helper.split_exception_trace(stderr)
+reduced_exception_msg, stacktrace = fuzzer_helper.split_exception_trace(stderr)
 
 # check if this is a duplicate issue
-if (not no_git_checks) and is_known_issue(exception_msg):
+if (not no_git_checks) and is_known_issue(reduced_exception_msg):
     exit(0)
+
+if returncode < 0 or (returncode != 0 and fuzzer_helper.is_internal_error(stderr)):
+    exception_msg = reduced_exception_msg
 
 print(f"================MARKER====================")
 print(f"After reducing: the below sql causes an internal error \n `{cmd}`")

@@ -182,25 +182,15 @@ def run_shell_command_batch(shell, cmd):
 def is_reproducible_issue(shell, issue) -> bool:
     if issue['number'] == '4294' or issue['number'] == 4294:
         print('checking holy 4294')
-    else:
-        if any(label['name'] == 'AFL' for label in issue['labels']):
-            # The reproducibility of AFL issues can not be tested, because they are formatted differently.
-            # We assume they are reproducible (i.e. not fixed yet)
-            return True
     print(f"issue number: {issue['number']}")
     extract = extract_issue(issue['body'], issue['number'])
-    labels = issue['labels']
-    label_timeout = False
-    for label in labels:
-        if label['name'] == 'timeout':
-            label_timeout = True
     if extract is None:
         # failed extract: leave the issue as-is
         return True
     sql = extract[0] + ';'
     print(f"sql:\n{sql}", flush=True)
-    if label_timeout is False:
-        print(f"Checking issue {issue['number']}...")
+    # try max 30 times to reproduce; some errors not always occur
+    for _ in range(30):
         (stdout, stderr, returncode, is_timeout) = run_shell_command_batch(shell, sql)
         print(f"returncode:\n{returncode}")
         print(f"is_internal_error:\n{is_internal_error(stderr)}")
@@ -209,13 +199,13 @@ def is_reproducible_issue(shell, issue) -> bool:
             print(f"stdout:\n{stdout}", flush=True)
         if is_timeout:
             label_github_issue(issue['number'], 'timeout')
-        else:
-            if returncode == 0:
-                return False
-            if not is_internal_error(stderr):
-                return False
-    # issue is still reproducible
-    return True
+            return True
+        if returncode < 0:
+            return True
+        if is_internal_error(stderr):
+            return True
+    # issue is not reproducible
+    return False
 
 
 def get_github_issues_list() -> list[dict]:
@@ -230,7 +220,12 @@ def close_non_reproducible_issues(shell) -> dict[str, dict]:
     reproducible_issues: dict[str, dict] = {}
     for issue in get_github_issues_list():
         print(f"=========================")
-        if not is_reproducible_issue(shell, issue):
+        if any(label['name'] in ['AFL', 'timeout'] for label in issue['labels']):
+            # The reproducibility of AFL issues can not be tested, because they are formatted differently.
+            # We assume they are reproducible (i.e. not fixed yet)
+            print(f"skipping issue {issue['number']}... (issues with label 'AFL' or 'timeout' are ignored)")
+            reproducible_issues[issue['title']] = issue
+        elif not is_reproducible_issue(shell, issue):
             # the issue appears to be fixed - close the issue
             print(f"Failed to reproduce issue {issue['number']}")
             # close_github_issue(int(issue['number']))
